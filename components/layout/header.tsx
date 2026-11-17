@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
@@ -19,7 +19,17 @@ const links = [
   { href: "/#faq", label: "FAQ" },
 ];
 
+const noopSubscribe = () => () => {};
+/** true in the browser, false during SSR — without a setState-in-effect. */
+function useIsClient() {
+  return useSyncExternalStore(noopSubscribe, () => true, () => false);
+}
+
+// Soft ease-out: quick to respond, slow to settle.
+const EASE = "ease-[cubic-bezier(0.22,1,0.36,1)]";
+
 export function Header() {
+  const isClient = useIsClient();
   const pathname = usePathname();
   const { status, isAuthenticated } = useAuth();
   // The menu belongs to the page it was opened on, so navigating closes it.
@@ -35,6 +45,13 @@ export function Header() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpenOn(null);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -97,41 +114,77 @@ export function Header() {
             aria-expanded={open}
             aria-controls="mobile-nav"
           >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            <span className="relative h-5 w-5">
+              <Menu
+                aria-hidden
+                className={cn(
+                  "absolute inset-0 h-5 w-5 transition-all duration-300 motion-reduce:transition-none",
+                  EASE,
+                  open ? "rotate-90 scale-75 opacity-0" : "rotate-0 scale-100 opacity-100",
+                )}
+              />
+              <X
+                aria-hidden
+                className={cn(
+                  "absolute inset-0 h-5 w-5 transition-all duration-300 motion-reduce:transition-none",
+                  EASE,
+                  open ? "rotate-0 scale-100 opacity-100" : "-rotate-90 scale-75 opacity-0",
+                )}
+              />
+            </span>
           </button>
         </div>
       </div>
 
       {/* Portalled to <body>: the header's backdrop-blur would otherwise become
           the containing block for this fixed panel and collapse it to 0 height. */}
-      {open && createPortal(
+      {isClient && createPortal(
         <nav
           id="mobile-nav"
           aria-label="Mobile"
-          className="fixed inset-x-0 top-16 bottom-0 z-40 overflow-y-auto border-t border-border bg-bg px-5 pt-4 pb-10 md:hidden"
+          aria-hidden={!open}
+          inert={!open}
+          className={cn(
+            "fixed inset-x-0 top-16 bottom-0 z-40 overflow-y-auto border-t border-border bg-bg/95 px-5 pt-4 pb-10 backdrop-blur-md md:hidden",
+            "transition-[opacity,transform,visibility] duration-[420ms] motion-reduce:transition-none",
+            EASE,
+            open ? "visible translate-y-0 opacity-100" : "pointer-events-none invisible -translate-y-3 opacity-0",
+          )}
         >
           <ul className="space-y-1">
-            {links.map((l) => (
-              <li key={l.href}>
-                <Link href={l.href} onClick={() => setOpenOn(null)} className="block rounded-xl px-3 py-3.5 text-lg font-medium hover:bg-surface">
+            {[...links, ...(isAuthenticated ? [{ href: "/my-courses", label: "My courses" }] : [])].map((l, i) => (
+              <li
+                key={l.href}
+                style={{ transitionDelay: open ? `${80 + i * 45}ms` : "0ms" }}
+                className={cn(
+                  "transition-[opacity,transform] duration-500 motion-reduce:transition-none",
+                  EASE,
+                  open ? "translate-y-0 opacity-100" : "-translate-y-1.5 opacity-0",
+                )}
+              >
+                <Link
+                  href={l.href}
+                  onClick={() => setOpenOn(null)}
+                  className="block rounded-xl px-3 py-3.5 text-lg font-medium transition-colors hover:bg-surface"
+                >
                   {l.label}
                 </Link>
               </li>
             ))}
-            {isAuthenticated && (
-              <li>
-                <Link href="/my-courses" onClick={() => setOpenOn(null)} className="block rounded-xl px-3 py-3.5 text-lg font-medium hover:bg-surface">
-                  My courses
-                </Link>
-              </li>
-            )}
           </ul>
           {!isAuthenticated && status !== "loading" && (
-            <div className="mt-6 grid gap-2">
-              <ButtonLink href="/signup" variant="primary" size="lg">
+            <div
+              style={{ transitionDelay: open ? "240ms" : "0ms" }}
+              className={cn(
+                "mt-6 grid gap-2 transition-[opacity,transform] duration-500 motion-reduce:transition-none",
+                EASE,
+                open ? "translate-y-0 opacity-100" : "-translate-y-1.5 opacity-0",
+              )}
+            >
+              <ButtonLink href="/signup" variant="primary" size="lg" onClick={() => setOpenOn(null)}>
                 Sign up free
               </ButtonLink>
-              <ButtonLink href="/login" variant="outline" size="lg">
+              <ButtonLink href="/login" variant="outline" size="lg" onClick={() => setOpenOn(null)}>
                 Log in
               </ButtonLink>
             </div>
