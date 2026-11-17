@@ -10,7 +10,7 @@ export function ProgressGraph() {
   ];
 
   return (
-    <figure className="relative overflow-hidden rounded-[28px] bg-black p-6 text-white sm:p-8">
+    <figure className="relative overflow-hidden rounded-[28px] bg-black p-6 text-white [--graph-accent:#FDE700] [--graph-bg:#000] sm:p-8 dark:bg-surface-2 dark:text-fg dark:[--graph-accent:var(--brand)] dark:[--graph-bg:var(--surface-2)]">
       <svg viewBox="0 0 400 320" className="h-auto w-full" role="img" aria-labelledby="graph-title">
         <title id="graph-title">A learning curve rising through three stages: learn, attempt, improve</title>
         <defs>
@@ -37,7 +37,7 @@ export function ProgressGraph() {
         <path
           d="M40 285 C 110 270, 150 220, 196 178 S 290 95, 380 48"
           fill="none"
-          stroke="#FDE700"
+          stroke="var(--graph-accent)"
           strokeWidth="4"
           strokeLinecap="round"
           className="animate-draw"
@@ -51,8 +51,8 @@ export function ProgressGraph() {
               cx={p.x}
               cy={p.y}
               r="7"
-              fill="#000"
-              stroke="#FDE700"
+              fill="var(--graph-bg)"
+              stroke="var(--graph-accent)"
               strokeWidth="3"
               className="animate-pop"
               style={{ animationDelay: `${0.7 + i * 0.35}s` }}
@@ -61,7 +61,7 @@ export function ProgressGraph() {
               x={p.x + (i === 2 ? -14 : 14)}
               y={p.y - 14}
               textAnchor={i === 2 ? "end" : "start"}
-              fill="#fff"
+              fill="currentColor"
               fontSize="17"
               fontWeight="600"
               fontFamily="var(--font-display)"

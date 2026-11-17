@@ -17,7 +17,6 @@ export default async function HomePage() {
   const rated = list.filter((c) => (c.ratings ?? 0) > 0);
   const stats = {
     courses: list.length,
-    learners: list.reduce((sum, c) => sum + (c.purchased ?? 0), 0),
     rating: rated.length ? rated.reduce((s, c) => s + (c.ratings ?? 0), 0) / rated.length : 0,
   };
 
@@ -42,7 +41,7 @@ export default async function HomePage() {
           {list.length ? (
             <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {list.slice(0, 6).map((course, i) => (
-                <CourseCard key={course._id} course={course} priority={i < 3} />
+                <CourseCard key={course._id} course={course} priority={i < 3} showEnrolled={false} />
               ))}
             </div>
           ) : (

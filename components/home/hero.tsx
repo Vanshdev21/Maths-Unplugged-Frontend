@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { BookOpen, ShieldCheck, Star, Users } from "lucide-react";
+import { BookOpen, ShieldCheck, Star } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { Container } from "@/components/ui/misc";
 import { ProgressGraph } from "./progress-graph";
@@ -8,7 +8,7 @@ import type { Layout } from "@/lib/types";
 
 interface HeroProps {
   banner?: Layout["banner"];
-  stats: { courses: number; learners: number; rating: number };
+  stats: { courses: number; rating: number };
 }
 
 export function Hero({ banner, stats }: HeroProps) {
@@ -33,14 +33,6 @@ export function Hero({ banner, stats }: HeroProps) {
           </div>
 
           <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm text-muted">
-            {stats.learners > 0 && (
-              <li className="inline-flex items-center gap-2">
-                <Users className="h-4 w-4 text-fg" aria-hidden />
-                <span>
-                  <strong className="font-semibold text-fg tabular">{stats.learners.toLocaleString("en-IN")}</strong> enrolments
-                </span>
-              </li>
-            )}
             {stats.courses > 0 && (
               <li className="inline-flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-fg" aria-hidden />

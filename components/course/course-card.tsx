@@ -26,7 +26,15 @@ export function CourseThumb({ course, priority, className }: { course: Course; p
   );
 }
 
-export function CourseCard({ course, priority }: { course: Course; priority?: boolean }) {
+export function CourseCard({
+  course,
+  priority,
+  showEnrolled = true,
+}: {
+  course: Course;
+  priority?: boolean;
+  showEnrolled?: boolean;
+}) {
   const { lessons, minutes } = courseStats(course);
   const off = discountPercent(course.price, course.estimatedPrice);
 
@@ -54,7 +62,7 @@ export function CourseCard({ course, priority }: { course: Course; priority?: bo
               <Clock className="h-3.5 w-3.5" aria-hidden /> {formatDuration(minutes)}
             </span>
           )}
-          {!!course.purchased && (
+          {showEnrolled && !!course.purchased && (
             <span className="inline-flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5" aria-hidden /> {course.purchased.toLocaleString("en-IN")} enrolled
             </span>
