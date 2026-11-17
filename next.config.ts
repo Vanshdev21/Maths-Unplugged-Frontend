@@ -5,7 +5,13 @@ import type { NextConfig } from "next";
  * proxied to the Express backend. Auth cookies therefore stay first-party,
  * which keeps login working in browsers that block third-party cookies.
  */
-const BACKEND_URL = (process.env.BACKEND_URL ?? "http://localhost:8000").replace(/\/$/, "");
+// Tolerates a missing https://, quotes or a trailing slash in BACKEND_URL.
+const rawBackend = process.env.BACKEND_URL?.trim().replace(/^["'[]+|["'\]]+$/g, "").replace(/\/+$/, "");
+const BACKEND_URL = !rawBackend
+  ? "http://localhost:8000"
+  : /^https?:\/\//i.test(rawBackend)
+    ? rawBackend
+    : `https://${rawBackend}`;
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
