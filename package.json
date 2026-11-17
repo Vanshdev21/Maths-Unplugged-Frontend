@@ -1,19 +1,33 @@
 {
-  "name": "client",
-  "version": "0.1.0",
+  "name": "maths-unplugged-client",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.1.1",
+    "@reduxjs/toolkit": "^2.8.2",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.525.0",
     "next": "16.4.6",
+    "next-themes": "^0.4.6",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "react-hook-form": "^7.60.0",
+    "react-redux": "^9.2.0",
+    "recharts": "^3.1.0",
+    "server-only": "^0.0.1",
+    "sonner": "^2.0.6",
+    "tailwind-merge": "^3.3.1",
+    "zod": "^4.0.5"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.5",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^20",
     "@types/react": "^19",

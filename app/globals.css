@@ -1,26 +1,172 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------ */
+/* Design tokens                                                       */
+/* Brand: the logo's yellow (#FDE700) on pure black.                   */
+/* ------------------------------------------------------------------ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #ffffff;
+  --surface: #f6f6f3;
+  --surface-2: #ededE8;
+  --fg: #141414;
+  --muted: #5f5f58;
+  --subtle: #8a8a82;
+  --border: #e3e3dd;
+  --grid: rgba(20, 20, 20, 0.06);
+  --brand: #fde700;
+  --brand-ink: #000000;
+  --brand-soft: #fff9c2;
+  --brand-line: #e6d200;
+  --danger: #c8321e;
+  --success: #12805c;
+  --ring: #141414;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #000000;
+  --surface: #0e0e0e;
+  --surface-2: #191919;
+  --fg: #f3f3ef;
+  --muted: #a3a39b;
+  --subtle: #76766f;
+  --border: #262626;
+  --grid: rgba(255, 255, 255, 0.06);
+  --brand: #fde700;
+  --brand-ink: #000000;
+  --brand-soft: rgba(253, 231, 0, 0.12);
+  --brand-line: #fde700;
+  --danger: #ff6b55;
+  --success: #3ccf91;
+  --ring: #fde700;
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-poppins-family), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-josefin-family), var(--font-poppins-family), sans-serif;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-line: var(--brand-line);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-ring: var(--ring);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: var(--brand);
+    color: #000;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Graph-paper texture used behind the hero and empty states. */
+  .bg-graph {
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-position: -1px -1px;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* One deliberate motion: the curve in the hero draws itself once. */
+@keyframes draw {
+  from {
+    stroke-dashoffset: var(--len, 600);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-draw {
+  stroke-dasharray: var(--len, 600);
+  animation: draw 1.6s cubic-bezier(0.65, 0, 0.35, 1) 0.2s both;
+}
+
+.animate-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pop 0.35s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-draw,
+  .animate-pop {
+    animation: none;
+    stroke-dasharray: none;
+  }
 }
