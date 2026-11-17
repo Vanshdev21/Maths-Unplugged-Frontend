@@ -141,7 +141,13 @@ export function getErrorMessage(error: unknown, fallback = "Something went wrong
 }
 
 /** Resizes an image in the browser and returns a JPEG/PNG data URL. */
-export function compressImage(file: File, maxSize = 1600, quality = 0.85): Promise<string> {
+export function compressImage(
+  file: File,
+  maxSize = 1600,
+  quality = 0.85,
+  /** Always output JPEG (smaller), e.g. for photos of handwritten work. */
+  forceJpeg = false,
+): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith("image/")) {
       reject(new Error("Choose an image file (JPG, PNG or WebP)."));
@@ -163,7 +169,7 @@ export function compressImage(file: File, maxSize = 1600, quality = 0.85): Promi
           return;
         }
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const type = file.type === "image/png" ? "image/png" : "image/jpeg";
+        const type = !forceJpeg && file.type === "image/png" ? "image/png" : "image/jpeg";
         resolve(canvas.toDataURL(type, quality));
       };
       img.src = reader.result as string;

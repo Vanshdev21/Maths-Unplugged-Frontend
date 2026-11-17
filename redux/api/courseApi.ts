@@ -68,13 +68,21 @@ export const courseApi = baseApi.injectEndpoints({
       },
     }),
 
-    addQuestion: build.mutation<ApiMessage & { questions: CourseComment[] }, { question: string; courseId: string; contentId: string }>({
+    addQuestion: build.mutation<ApiMessage & { questions: CourseComment[] }, { question: string; courseId: string; contentId: string; images?: string[] }>({
       query: (body) => ({ url: "/course/add-question", method: "POST", body }),
       invalidatesTags: (_r, _e, arg) => [{ type: "Content", id: arg.courseId }],
     }),
 
-    addReply: build.mutation<ApiMessage, { reply: string; courseId: string; contentId: string; questionId: string }>({
+    addReply: build.mutation<ApiMessage, { reply: string; courseId: string; contentId: string; questionId: string; images?: string[] }>({
       query: (body) => ({ url: "/course/add-reply", method: "POST", body }),
+      invalidatesTags: (_r, _e, arg) => [{ type: "Content", id: arg.courseId }],
+    }),
+
+    editComment: build.mutation<
+      ApiMessage & { comment: CourseComment },
+      { courseId: string; contentId: string; questionId: string; replyId?: string; comment: string; removeImages?: string[] }
+    >({
+      query: (body) => ({ url: "/course/edit-comment", method: "PUT", body }),
       invalidatesTags: (_r, _e, arg) => [{ type: "Content", id: arg.courseId }],
     }),
 
@@ -139,6 +147,7 @@ export const {
   useUpdateProgressMutation,
   useAddQuestionMutation,
   useAddReplyMutation,
+  useEditCommentMutation,
   useAddReviewMutation,
   useAddReviewReplyMutation,
   useLazyGetLessonUploadSignatureQuery,

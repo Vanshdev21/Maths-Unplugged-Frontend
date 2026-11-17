@@ -15,10 +15,19 @@ export interface UserSnapshot {
 /** Older records store only the user's id; newer ones store a snapshot. */
 export type CommentAuthor = UserSnapshot | string;
 
+export interface CommentImage {
+  public_id: string;
+  url: string;
+  width?: number;
+  height?: number;
+}
+
 export interface CourseComment {
   _id: string;
   user: CommentAuthor;
   comment: string;
+  images?: CommentImage[];
+  editedAt?: string;
   commentReplies?: CourseComment[];
   createdAt?: string;
 }
