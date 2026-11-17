@@ -7,7 +7,7 @@ import { ButtonLink, Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/misc";
 import { useGetMyCoursesQuery } from "@/redux/api/courseApi";
 import { useProgressPercent } from "@/hooks/use-progress";
-import { courseStats, formatDuration, getErrorMessage } from "@/lib/utils";
+import { courseStats, formatDuration, getErrorMessage, plural } from "@/lib/utils";
 import type { Course } from "@/lib/types";
 
 function EnrolledCard({ course }: { course: Course }) {
@@ -23,7 +23,7 @@ function EnrolledCard({ course }: { course: Course }) {
           </Link>
         </h2>
         <p className="mt-2 text-sm text-muted">
-          {lessons} lessons{minutes > 0 && `, ${formatDuration(minutes)}`}
+          {plural(lessons, "lesson")}{minutes > 0 && `, ${formatDuration(minutes)}`}
         </p>
         <div className="mt-auto pt-5">
           <div className="flex items-center justify-between text-sm">

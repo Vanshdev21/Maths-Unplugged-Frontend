@@ -7,7 +7,7 @@ import { PurchaseCard } from "@/components/course/purchase-card";
 import { Curriculum } from "@/components/course/curriculum";
 import { ReviewList } from "@/components/course/reviews";
 import { fetchCourse } from "@/lib/server-api";
-import { coursePrice, courseStats, formatDuration } from "@/lib/utils";
+import { coursePrice, courseStats, formatDuration, plural } from "@/lib/utils";
 import { site } from "@/lib/site";
 
 export const revalidate = 60;
@@ -83,7 +83,7 @@ export default async function CoursePage({ params }: Props) {
               </li>
               {lessons > 0 && (
                 <li className="inline-flex items-center gap-1.5">
-                  <BookOpen className="h-4 w-4" aria-hidden /> {lessons} lessons
+                  <BookOpen className="h-4 w-4" aria-hidden /> {plural(lessons, "lesson")}
                 </li>
               )}
               {minutes > 0 && (
@@ -126,7 +126,7 @@ export default async function CoursePage({ params }: Props) {
               <h2 className="text-2xl font-bold">Course content</h2>
               {lessons > 0 && (
                 <p className="text-sm text-muted">
-                  {lessons} lessons{minutes > 0 && `, ${formatDuration(minutes)} total`}
+                  {plural(lessons, "lesson")}{minutes > 0 && `, ${formatDuration(minutes)} total`}
                 </p>
               )}
             </div>

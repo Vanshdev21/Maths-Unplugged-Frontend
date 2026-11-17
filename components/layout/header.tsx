@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { ButtonLink } from "@/components/ui/button";
@@ -101,7 +102,9 @@ export function Header() {
         </div>
       </div>
 
-      {open && (
+      {/* Portalled to <body>: the header's backdrop-blur would otherwise become
+          the containing block for this fixed panel and collapse it to 0 height. */}
+      {open && createPortal(
         <nav
           id="mobile-nav"
           aria-label="Mobile"
@@ -110,14 +113,14 @@ export function Header() {
           <ul className="space-y-1">
             {links.map((l) => (
               <li key={l.href}>
-                <Link href={l.href} className="block rounded-xl px-3 py-3.5 text-lg font-medium hover:bg-surface">
+                <Link href={l.href} onClick={() => setOpenOn(null)} className="block rounded-xl px-3 py-3.5 text-lg font-medium hover:bg-surface">
                   {l.label}
                 </Link>
               </li>
             ))}
             {isAuthenticated && (
               <li>
-                <Link href="/my-courses" className="block rounded-xl px-3 py-3.5 text-lg font-medium hover:bg-surface">
+                <Link href="/my-courses" onClick={() => setOpenOn(null)} className="block rounded-xl px-3 py-3.5 text-lg font-medium hover:bg-surface">
                   My courses
                 </Link>
               </li>
@@ -133,7 +136,8 @@ export function Header() {
               </ButtonLink>
             </div>
           )}
-        </nav>
+        </nav>,
+        document.body,
       )}
     </header>
   );

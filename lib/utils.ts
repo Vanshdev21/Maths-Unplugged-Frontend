@@ -171,3 +171,8 @@ export function compressImage(file: File, maxSize = 1600, quality = 0.85): Promi
     reader.readAsDataURL(file);
   });
 }
+
+/** "1 lesson", "8 lessons" */
+export function plural(count: number, word: string, pluralWord = `${word}s`) {
+  return `${count} ${count === 1 ? word : pluralWord}`;
+}

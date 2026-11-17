@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, Clock, Users } from "lucide-react";
 import { Badge, Stars } from "@/components/ui/misc";
-import { coursePrice, courseStats, discountPercent, formatDuration, formatPrice } from "@/lib/utils";
+import { coursePrice, courseStats, discountPercent, formatDuration, formatPrice, plural } from "@/lib/utils";
 import type { Course } from "@/lib/types";
 
 export function CourseThumb({ course, priority, className }: { course: Course; priority?: boolean; className?: string }) {
@@ -55,7 +55,7 @@ export function CourseCard({
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted">
           {lessons > 0 && (
             <span className="inline-flex items-center gap-1.5">
-              <BookOpen className="h-3.5 w-3.5" aria-hidden /> {lessons} lessons
+              <BookOpen className="h-3.5 w-3.5" aria-hidden /> {plural(lessons, "lesson")}
             </span>
           )}
           {minutes > 0 && (
