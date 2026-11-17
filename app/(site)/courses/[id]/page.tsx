@@ -7,7 +7,7 @@ import { PurchaseCard } from "@/components/course/purchase-card";
 import { Curriculum } from "@/components/course/curriculum";
 import { ReviewList } from "@/components/course/reviews";
 import { fetchCourse } from "@/lib/server-api";
-import { courseStats, formatDuration } from "@/lib/utils";
+import { coursePrice, courseStats, formatDuration } from "@/lib/utils";
 import { site } from "@/lib/site";
 
 export const revalidate = 60;
@@ -46,7 +46,7 @@ export default async function CoursePage({ params }: Props) {
     description: course.description,
     provider: { "@type": "Organization", name: site.name, sameAs: site.url },
     ...(course.thumbnail?.url ? { image: course.thumbnail.url } : {}),
-    offers: { "@type": "Offer", price: course.price, priceCurrency: "INR", category: course.price > 0 ? "Paid" : "Free" },
+    offers: { "@type": "Offer", price: coursePrice(course), priceCurrency: "INR", category: coursePrice(course) > 0 ? "Paid" : "Free" },
     ...(reviews.length
       ? { aggregateRating: { "@type": "AggregateRating", ratingValue: (course.ratings ?? 0).toFixed(1), reviewCount: reviews.length } }
       : {}),

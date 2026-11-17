@@ -9,7 +9,7 @@ export default function MyCoursesPage() {
   return (
     <Container className="py-12 lg:py-16">
       <h1 className="text-4xl font-bold">My courses</h1>
-      <p className="mt-2 text-muted">Progress is saved on this device as you mark lessons complete.</p>
+      <p className="mt-2 text-muted">Your progress is saved to your account, so it follows you across devices.</p>
       <div className="mt-10">
         <RequireAuth>
           <MyCourses />

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Circle, PlayCircle } from "lucide-react";
+import { CheckCircle2, Circle, FileText, PlayCircle } from "lucide-react";
 import { cn, formatDuration, groupBySection } from "@/lib/utils";
 import type { Lesson } from "@/lib/types";
 
@@ -52,7 +52,16 @@ export function LessonList({ lessons, currentId, completed, onSelect, onToggle }
                         {lesson.index + 1}. {lesson.title}
                       </span>
                       <span className="inline-flex items-center gap-1 text-xs text-muted">
-                        <PlayCircle className="h-3 w-3" aria-hidden /> {formatDuration(lesson.videoLength)}
+                        {lesson.contentType === "document" ? (
+                          <>
+                            <FileText className="h-3 w-3" aria-hidden />
+                            {lesson.videoLength > 0 ? `${formatDuration(lesson.videoLength)} read` : "Notes"}
+                          </>
+                        ) : (
+                          <>
+                            <PlayCircle className="h-3 w-3" aria-hidden /> {formatDuration(lesson.videoLength)}
+                          </>
+                        )}
                       </span>
                     </button>
                   </li>

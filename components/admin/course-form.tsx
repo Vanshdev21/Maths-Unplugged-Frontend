@@ -6,31 +6,62 @@ import { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm, type Control, type FieldErrors, type UseFormRegister } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowDown, ArrowUp, ChevronDown, ImagePlus, Link2, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, FileText, ImagePlus, Link2, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { VideoPlayer } from "@/components/course/video-player";
-import { useCreateCourseMutation, useEditCourseMutation, type CoursePayload } from "@/redux/api/courseApi";
+import {
+  useCreateCourseMutation,
+  useEditCourseMutation,
+  useLazyGetLessonUploadSignatureQuery,
+  type CoursePayload,
+} from "@/redux/api/courseApi";
+import { formatBytes } from "@/lib/document";
 import { cn, compressImage, formatDuration, getErrorMessage } from "@/lib/utils";
-import { LEVELS } from "@/lib/site";
+import { LEVELS, PAYMENTS_ENABLED } from "@/lib/site";
 import type { Course } from "@/lib/types";
 
 const url = z.string().trim().url("Enter a full URL starting with https://");
 
-const lessonSchema = z.object({
-  _id: z.string().optional(),
-  // Kept as-is so editing a lesson never drops learner questions.
-  questions: z.array(z.unknown()).optional(),
-  title: z.string().trim().min(1, "Lesson title is required"),
-  description: z.string().trim().min(1, "Add a short description"),
-  videoSection: z.string().trim().min(1, "Section is required"),
-  videoUrl: z.string().trim().min(1, "Video URL is required"),
-  videoPlayer: z.string().min(1),
-  videoLength: z.number({ error: "Enter minutes" }).min(0, "Can't be negative"),
-  suggestion: z.string().optional(),
-  links: z.array(z.object({ title: z.string().trim().min(1, "Title required"), url })),
+const lessonFileSchema = z.object({
+  public_id: z.string(),
+  name: z.string(),
+  bytes: z.number(),
+  format: z.string(),
+  mimeType: z.string(),
 });
+
+const lessonSchema = z
+  .object({
+    _id: z.string().optional(),
+    // Kept as-is so editing a lesson never drops learner questions.
+    questions: z.array(z.unknown()).optional(),
+    title: z.string().trim().min(1, "Lesson title is required"),
+    description: z.string().trim().min(1, "Add a short description"),
+    videoSection: z.string().trim().min(1, "Section is required"),
+    contentType: z.enum(["video", "document"]),
+    videoUrl: z.string().trim(),
+    videoPlayer: z.string(),
+    file: lessonFileSchema.nullable().optional(),
+    documentUrl: z.string().trim().optional(),
+    allowDownload: z.boolean(),
+    videoLength: z.number({ error: "Enter minutes" }).min(0, "Can't be negative"),
+    suggestion: z.string().optional(),
+    links: z.array(z.object({ title: z.string().trim().min(1, "Title required"), url })),
+  })
+  .superRefine((lesson, ctx) => {
+    if (lesson.contentType === "video" && !lesson.videoUrl) {
+      ctx.addIssue({ code: "custom", path: ["videoUrl"], message: "Video URL is required" });
+    }
+    if (lesson.contentType === "document") {
+      if (!lesson.file && !lesson.documentUrl) {
+        ctx.addIssue({ code: "custom", path: ["documentUrl"], message: "Upload a file or paste a link" });
+      } else if (!lesson.file && lesson.documentUrl && !/^https?:\/\//i.test(lesson.documentUrl)) {
+        ctx.addIssue({ code: "custom", path: ["documentUrl"], message: "Enter a full URL starting with https://" });
+      }
+    }
+  });
 
 const schema = z
   .object({
@@ -57,8 +88,12 @@ const emptyLesson = (section = ""): Values["courseData"][number] => ({
   title: "",
   description: "",
   videoSection: section,
+  contentType: "video",
   videoUrl: "",
   videoPlayer: "youtube",
+  file: null,
+  documentUrl: "",
+  allowDownload: true,
   videoLength: 0,
   suggestion: "",
   links: [],
@@ -82,6 +117,10 @@ function toDefaults(course?: Course): Values {
         title: l.title ?? "",
         description: l.description ?? "",
         videoSection: l.videoSection ?? "",
+        contentType: l.contentType ?? "video",
+        file: l.file ?? null,
+        documentUrl: l.documentUrl ?? "",
+        allowDownload: l.allowDownload ?? true,
         videoUrl: l.videoUrl ?? "",
         videoPlayer: l.videoPlayer ?? "youtube",
         videoLength: Number(l.videoLength) || 0,
@@ -164,6 +203,161 @@ function LessonLinks({ control, register, index, errors }: { control: Control<Va
   );
 }
 
+const ACCEPTED_FILES = ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.png,.jpg,.jpeg,.webp,.zip";
+const MAX_FILE_MB = 100;
+
+type LessonFileValue = z.infer<typeof lessonFileSchema>;
+
+/** Uploads straight from the browser to Cloudinary (private storage). */
+function uploadToCloudinary(
+  file: File,
+  upload: { url: string; apiKey: string; timestamp: number; folder: string; type: string; signature: string },
+  onProgress: (percent: number) => void,
+) {
+  return new Promise<LessonFileValue>((resolve, reject) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("api_key", upload.apiKey);
+    form.append("timestamp", String(upload.timestamp));
+    form.append("folder", upload.folder);
+    form.append("type", upload.type);
+    form.append("signature", upload.signature);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", upload.url);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onerror = () => reject(new Error("Upload failed. Check your connection and try again."));
+    xhr.onload = () => {
+      const data = JSON.parse(xhr.responseText || "{}") as {
+        public_id?: string;
+        bytes?: number;
+        format?: string;
+        error?: { message?: string };
+      };
+      if (xhr.status >= 200 && xhr.status < 300 && data.public_id) {
+        resolve({
+          public_id: data.public_id,
+          name: file.name,
+          bytes: data.bytes ?? file.size,
+          format: data.format ?? file.name.split(".").pop()?.toLowerCase() ?? "",
+          mimeType: file.type || "application/octet-stream",
+        });
+      } else {
+        reject(new Error(data.error?.message ?? "Upload failed. Try again."));
+      }
+    };
+    xhr.send(form);
+  });
+}
+
+function LessonDocumentFields({
+  index,
+  file,
+  error,
+  register,
+  onFileChange,
+}: {
+  index: number;
+  file: LessonFileValue | null;
+  error?: string;
+  register: UseFormRegister<Values>;
+  onFileChange: (file: LessonFileValue | null) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [getSignature] = useLazyGetLessonUploadSignatureQuery();
+
+  const onPick = async (picked?: File) => {
+    if (!picked) return;
+    if (picked.size > MAX_FILE_MB * 1024 * 1024) {
+      toast.error(`Files must be under ${MAX_FILE_MB} MB`);
+      return;
+    }
+    try {
+      setProgress(0);
+      const { upload } = await getSignature().unwrap();
+      const uploaded = await uploadToCloudinary(picked, upload, setProgress);
+      onFileChange(uploaded);
+      toast.success(`Uploaded ${picked.name}`);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setProgress(null);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="mb-1.5 text-sm font-medium">Upload a file</p>
+        {file ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+            <FileText className="h-5 w-5 shrink-0 text-muted" aria-hidden />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{file.name}</p>
+              <p className="text-xs text-muted">{formatBytes(file.bytes)}</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => inputRef.current?.click()} disabled={progress !== null}>
+              Replace
+            </Button>
+            <Button variant="ghost" size="sm" className="hover:text-danger" onClick={() => onFileChange(null)} disabled={progress !== null}>
+              Remove
+            </Button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={progress !== null}
+            className="flex w-full flex-col items-center gap-1.5 rounded-xl border border-dashed border-border bg-surface px-4 py-6 text-sm text-muted transition hover:border-fg/40 disabled:opacity-70"
+          >
+            <Upload className="h-5 w-5" aria-hidden />
+            {progress !== null ? `Uploading… ${progress}%` : "Choose a PDF, notes, slides or worksheet"}
+            <span className="text-xs text-subtle">PDF, Word, PowerPoint, Excel, images or ZIP, up to {MAX_FILE_MB} MB</span>
+          </button>
+        )}
+        {progress !== null && (
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+            <div className="h-full bg-brand-line transition-all" style={{ width: `${progress}%` }} />
+          </div>
+        )}
+        <input ref={inputRef} type="file" accept={ACCEPTED_FILES} hidden onChange={(e) => onPick(e.target.files?.[0])} />
+      </div>
+
+      {!file && (
+        <Field label="Or paste a link" error={error} hint="Google Drive, Google Docs or any PDF link. Make sure it's shared so students can open it.">
+          {(id, d) => (
+            <Input
+              id={id}
+              placeholder="https://drive.google.com/…"
+              aria-invalid={!!error}
+              aria-describedby={d}
+              {...register(`courseData.${index}.documentUrl`)}
+            />
+          )}
+        </Field>
+      )}
+      {file && error && <p className="text-sm text-danger">{error}</p>}
+
+      <div className="grid gap-5 sm:grid-cols-[1fr_160px]">
+        <label className="flex items-start gap-3 text-sm">
+          <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[var(--fg)]" {...register(`courseData.${index}.allowDownload`)} />
+          <span>
+            <span className="font-medium">Let students download the file</span>
+            <span className="block text-muted">PDFs and images can still be read on the site when this is off. Other file types need downloads on.</span>
+          </span>
+        </label>
+        <Field label="Reading time (min)" hint="Optional">
+          {(id) => <Input id={id} type="number" min={0} {...register(`courseData.${index}.videoLength`, { valueAsNumber: true })} />}
+        </Field>
+      </div>
+    </div>
+  );
+}
+
 export function CourseForm({ course }: { course?: Course }) {
   const router = useRouter();
   const isEdit = !!course;
@@ -180,6 +374,7 @@ export function CourseForm({ course }: { course?: Course }) {
     handleSubmit,
     watch,
     getValues,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<Values, unknown, Output>({ resolver: zodResolver(schema), defaultValues: toDefaults(course) });
 
@@ -271,7 +466,14 @@ export function CourseForm({ course }: { course?: Course }) {
         </div>
       </Section>
 
-      <Section title="Pricing" description="Set the price to 0 to make the course free.">
+      <Section
+        title="Pricing"
+        description={
+          PAYMENTS_ENABLED
+            ? "Set the price to 0 to make the course free."
+            : "Payments are switched off, so every course is free for students right now. Prices set here apply once payments are turned on."
+        }
+      >
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Selling price (₹)" error={errors.price?.message}>
             {(id, d) => <Input id={id} type="number" min={0} inputMode="numeric" aria-invalid={!!errors.price} aria-describedby={d} {...register("price", { valueAsNumber: true })} />}
@@ -338,7 +540,9 @@ export function CourseForm({ course }: { course?: Course }) {
                       <span className="block truncate font-medium">{values?.title || "Untitled lesson"}</span>
                       <span className="block truncate text-xs text-muted">
                         {values?.videoSection || "No section"}
-                        {Number(values?.videoLength) > 0 && `, ${formatDuration(Number(values?.videoLength))}`}
+                        {values?.contentType === "document"
+                          ? ", PDF or file"
+                          : Number(values?.videoLength) > 0 && `, ${formatDuration(Number(values?.videoLength))}`}
                       </span>
                     </span>
                     <ChevronDown className={cn("ml-auto h-4 w-4 shrink-0 text-muted transition", open && "rotate-180")} aria-hidden />
@@ -376,30 +580,62 @@ export function CourseForm({ course }: { course?: Course }) {
                         {(id) => <Input id={id} placeholder="Chapter 1: Basics" aria-invalid={!!lessonErrors?.videoSection} {...register(`courseData.${i}.videoSection`)} />}
                       </Field>
                     </div>
-                    <div className="grid gap-5 sm:grid-cols-[1fr_160px_140px]">
-                      <Field label="Video URL" error={lessonErrors?.videoUrl?.message}>
-                        {(id) => <Input id={id} placeholder="https://youtu.be/…" aria-invalid={!!lessonErrors?.videoUrl} {...register(`courseData.${i}.videoUrl`)} />}
-                      </Field>
-                      <Field label="Player">
-                        {(id) => (
-                          <Select id={id} {...register(`courseData.${i}.videoPlayer`)}>
-                            <option value="youtube">YouTube</option>
-                            <option value="vimeo">Vimeo</option>
-                            <option value="url">Video file URL</option>
-                          </Select>
-                        )}
-                      </Field>
-                      <Field label="Length (min)" error={lessonErrors?.videoLength?.message}>
-                        {(id) => <Input id={id} type="number" min={0} aria-invalid={!!lessonErrors?.videoLength} {...register(`courseData.${i}.videoLength`, { valueAsNumber: true })} />}
-                      </Field>
-                    </div>
-                    {values?.videoUrl && (
-                      <div>
-                        <button type="button" className="text-sm font-medium text-muted hover:text-fg" onClick={() => setPreviewLesson(previewLesson === field.id ? null : field.id)}>
-                          {previewLesson === field.id ? "Hide video preview" : "Check video"}
-                        </button>
-                        {previewLesson === field.id && <VideoPlayer url={values.videoUrl} player={values.videoPlayer} title="Lesson preview" className="mt-3 max-w-md" />}
+                    <fieldset>
+                      <legend className="mb-1.5 text-sm font-medium">Lesson type</legend>
+                      <div className="inline-flex rounded-xl border border-border p-1" role="radiogroup">
+                        {(["video", "document"] as const).map((type) => (
+                          <label
+                            key={type}
+                            className={cn(
+                              "cursor-pointer rounded-lg px-4 py-1.5 text-sm font-medium transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
+                              (values?.contentType ?? "video") === type ? "bg-fg text-bg" : "text-muted hover:text-fg",
+                            )}
+                          >
+                            <input type="radio" value={type} className="sr-only" {...register(`courseData.${i}.contentType`)} />
+                            {type === "video" ? "Video" : "PDF or file"}
+                          </label>
+                        ))}
                       </div>
+                    </fieldset>
+
+                    {(values?.contentType ?? "video") === "video" ? (
+                      <>
+                        <div className="grid gap-5 sm:grid-cols-[1fr_160px_140px]">
+                          <Field label="Video URL" error={lessonErrors?.videoUrl?.message}>
+                            {(id) => <Input id={id} placeholder="https://youtu.be/…" aria-invalid={!!lessonErrors?.videoUrl} {...register(`courseData.${i}.videoUrl`)} />}
+                          </Field>
+                          <Field label="Player">
+                            {(id) => (
+                              <Select id={id} {...register(`courseData.${i}.videoPlayer`)}>
+                                <option value="youtube">YouTube</option>
+                                <option value="vimeo">Vimeo</option>
+                                <option value="url">Video file URL</option>
+                              </Select>
+                            )}
+                          </Field>
+                          <Field label="Length (min)" error={lessonErrors?.videoLength?.message}>
+                            {(id) => <Input id={id} type="number" min={0} aria-invalid={!!lessonErrors?.videoLength} {...register(`courseData.${i}.videoLength`, { valueAsNumber: true })} />}
+                          </Field>
+                        </div>
+                        {values?.videoUrl && (
+                          <div>
+                            <button type="button" className="text-sm font-medium text-muted hover:text-fg" onClick={() => setPreviewLesson(previewLesson === field.id ? null : field.id)}>
+                              {previewLesson === field.id ? "Hide video preview" : "Check video"}
+                            </button>
+                            {previewLesson === field.id && <VideoPlayer url={values.videoUrl} player={values.videoPlayer} title="Lesson preview" className="mt-3 max-w-md" />}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <LessonDocumentFields
+                        index={i}
+                        file={values?.file ?? null}
+                        error={lessonErrors?.documentUrl?.message}
+                        register={register}
+                        onFileChange={(file) =>
+                          setValue(`courseData.${i}.file`, file, { shouldDirty: true, shouldValidate: !!lessonErrors?.documentUrl })
+                        }
+                      />
                     )}
                     <Field label="Description" error={lessonErrors?.description?.message}>
                       {(id) => <Textarea id={id} rows={3} aria-invalid={!!lessonErrors?.description} {...register(`courseData.${i}.description`)} />}

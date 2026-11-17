@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { CommentAuthor, Course, Lesson, User } from "./types";
+import { PAYMENTS_ENABLED } from "./site";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -15,6 +16,11 @@ const inr = new Intl.NumberFormat("en-IN", {
 export function formatPrice(amount?: number | null) {
   if (!amount || amount <= 0) return "Free";
   return inr.format(amount);
+}
+
+/** What a learner actually pays: always 0 while payments are switched off. */
+export function coursePrice(course: Pick<Course, "price">) {
+  return PAYMENTS_ENABLED ? Math.max(0, course.price || 0) : 0;
 }
 
 export function discountPercent(price?: number, estimatedPrice?: number) {

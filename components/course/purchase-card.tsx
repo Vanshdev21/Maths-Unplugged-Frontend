@@ -10,7 +10,7 @@ import { CourseThumb } from "./course-card";
 import { VideoPlayer } from "./video-player";
 import { useEnroll } from "@/hooks/use-razorpay";
 import { useAuth } from "@/redux/hooks";
-import { discountPercent, formatPrice, isEnrolled } from "@/lib/utils";
+import { coursePrice, discountPercent, formatPrice, isEnrolled } from "@/lib/utils";
 import type { Course } from "@/lib/types";
 
 export function PurchaseCard({ course }: { course: Course }) {
@@ -20,7 +20,8 @@ export function PurchaseCard({ course }: { course: Course }) {
   const [preview, setPreview] = useState(false);
 
   const enrolled = isEnrolled(user, course._id);
-  const off = discountPercent(course.price, course.estimatedPrice);
+  const price = coursePrice(course);
+  const off = price ? discountPercent(price, course.estimatedPrice) : 0;
   const accessHref = `/course-access/${course._id}`;
 
   const onEnroll = () => {
@@ -28,7 +29,7 @@ export function PurchaseCard({ course }: { course: Course }) {
       router.push(`/login?next=${encodeURIComponent(`/courses/${course._id}`)}`);
       return;
     }
-    enroll(course, user, () => router.push(accessHref));
+    enroll({ ...course, price }, user, () => router.push(accessHref));
   };
 
   return (
@@ -50,7 +51,7 @@ export function PurchaseCard({ course }: { course: Course }) {
 
       <div className="p-6">
         <div className="flex items-baseline gap-3">
-          <span className="text-3xl font-bold tabular">{formatPrice(course.price)}</span>
+          <span className="text-3xl font-bold tabular">{formatPrice(price)}</span>
           {off > 0 && (
             <>
               <span className="text-subtle line-through tabular">{formatPrice(course.estimatedPrice)}</span>
@@ -68,7 +69,7 @@ export function PurchaseCard({ course }: { course: Course }) {
             </ButtonLink>
           ) : (
             <Button size="lg" className="w-full" loading={busy} onClick={onEnroll}>
-              {course.price > 0 ? (user ? "Buy now" : "Log in to buy") : user ? "Enrol for free" : "Log in to enrol"}
+              {price > 0 ? (user ? "Buy now" : "Log in to buy") : user ? "Enrol for free" : "Log in to enrol"}
             </Button>
           )}
         </div>
@@ -89,7 +90,7 @@ export function PurchaseCard({ course }: { course: Course }) {
           <li className="flex items-center gap-3">
             <Smartphone className="h-4 w-4 text-fg" aria-hidden /> Watch on phone, tablet or laptop
           </li>
-          {course.price > 0 && (
+          {price > 0 && (
             <li className="flex items-center gap-3">
               <ShieldCheck className="h-4 w-4 text-fg" aria-hidden /> Secure checkout by Razorpay
             </li>

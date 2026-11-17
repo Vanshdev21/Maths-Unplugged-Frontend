@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, Clock, Users } from "lucide-react";
 import { Badge, Stars } from "@/components/ui/misc";
-import { courseStats, discountPercent, formatDuration, formatPrice } from "@/lib/utils";
+import { coursePrice, courseStats, discountPercent, formatDuration, formatPrice } from "@/lib/utils";
 import type { Course } from "@/lib/types";
 
 export function CourseThumb({ course, priority, className }: { course: Course; priority?: boolean; className?: string }) {
@@ -36,7 +36,8 @@ export function CourseCard({
   showEnrolled?: boolean;
 }) {
   const { lessons, minutes } = courseStats(course);
-  const off = discountPercent(course.price, course.estimatedPrice);
+  const price = coursePrice(course);
+  const off = price ? discountPercent(price, course.estimatedPrice) : 0;
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-bg transition hover:border-fg/30">
@@ -70,7 +71,7 @@ export function CourseCard({
         </div>
         <div className="mt-auto flex items-end justify-between gap-3 pt-5">
           <div className="flex items-baseline gap-2">
-            <span className="text-xl font-semibold tabular">{formatPrice(course.price)}</span>
+            <span className="text-xl font-semibold tabular">{formatPrice(price)}</span>
             {off > 0 && (
               <span className="text-sm text-subtle line-through tabular">{formatPrice(course.estimatedPrice)}</span>
             )}

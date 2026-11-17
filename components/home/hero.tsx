@@ -5,6 +5,7 @@ import { Container } from "@/components/ui/misc";
 import { ProgressGraph } from "./progress-graph";
 import { HeroSecondaryCta } from "./hero-cta";
 import type { Layout } from "@/lib/types";
+import { PAYMENTS_ENABLED } from "@/lib/site";
 
 interface HeroProps {
   banner?: Layout["banner"];
@@ -51,7 +52,7 @@ export function Hero({ banner, stats }: HeroProps) {
             )}
             <li className="inline-flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-fg" aria-hidden />
-              Secure payments via Razorpay
+              {PAYMENTS_ENABLED ? "Secure payments via Razorpay" : "Free to enrol"}
             </li>
           </ul>
         </div>

@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { LegalPage } from "@/components/legal/legal-page";
+import { PAYMENTS_ENABLED } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Refund policy" };
 
 export default function RefundPage() {
+  if (!PAYMENTS_ENABLED) notFound();
   return (
     <LegalPage
       title="Refund policy"

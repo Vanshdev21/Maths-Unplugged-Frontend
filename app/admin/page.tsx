@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, IndianRupee, ReceiptIndianRupee, Users } from "lucide-react";
+import { BookOpen, CalendarDays, IndianRupee, ReceiptIndianRupee, Users } from "lucide-react";
+import { PAYMENTS_ENABLED } from "@/lib/site";
 import { PageHeader } from "@/components/admin/admin-shell";
 import { MonthlyChart } from "@/components/admin/monthly-chart";
 import { orderAmount, orderCourse, orderUser } from "@/components/admin/order-helpers";
@@ -41,7 +42,16 @@ export default function AdminDashboard() {
         <Stat label="Learners" icon={Users} value={(users.data?.totalUsers ?? 0).toLocaleString("en-IN")} loading={users.isLoading} />
         <Stat label="Courses" icon={BookOpen} value={(courses.data?.totalCourses ?? 0).toLocaleString("en-IN")} loading={courses.isLoading} />
         <Stat label="Enrolments" icon={ReceiptIndianRupee} value={(orders.data?.totalOrders ?? 0).toLocaleString("en-IN")} loading={orders.isLoading} />
-        <Stat label="Revenue" icon={IndianRupee} value={revenue ? formatPrice(revenue) : "₹0"} loading={allOrders.isLoading} />
+        {PAYMENTS_ENABLED ? (
+          <Stat label="Revenue" icon={IndianRupee} value={revenue ? formatPrice(revenue) : "₹0"} loading={allOrders.isLoading} />
+        ) : (
+          <Stat
+            label="Enrolments this month"
+            icon={CalendarDays}
+            value={(orders.data?.analytics.at(-1)?.count ?? 0).toLocaleString("en-IN")}
+            loading={orders.isLoading}
+          />
+        )}
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">

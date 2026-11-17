@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 import { Container } from "@/components/ui/misc";
-import { site } from "@/lib/site";
+import { PAYMENTS_ENABLED, site } from "@/lib/site";
 
 const groups = [
   {
@@ -25,7 +25,7 @@ const groups = [
     links: [
       { href: "/terms", label: "Terms of use" },
       { href: "/privacy", label: "Privacy policy" },
-      { href: "/refund-policy", label: "Refund policy" },
+      ...(PAYMENTS_ENABLED ? [{ href: "/refund-policy", label: "Refund policy" }] : []),
     ],
   },
 ];
@@ -58,7 +58,7 @@ export function Footer() {
       </Container>
       <Container className="flex flex-col gap-2 border-t border-border py-6 text-xs text-subtle sm:flex-row sm:items-center sm:justify-between">
         <p>© {new Date().getFullYear()} {site.name}. All rights reserved.</p>
-        <p>Payments are processed securely by Razorpay.</p>
+        {PAYMENTS_ENABLED && <p>Payments are processed securely by Razorpay.</p>}
       </Container>
     </footer>
   );

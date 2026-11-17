@@ -7,6 +7,7 @@ import { BookOpen, LayoutDashboard, LogOut, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar } from "@/components/ui/misc";
 import { useLogoutMutation } from "@/redux/api/authApi";
+import { signOutOfGoogle } from "@/components/auth/google-button";
 import { useAuth } from "@/redux/hooks";
 
 export function UserMenu() {
@@ -35,6 +36,7 @@ export function UserMenu() {
   const onLogout = async () => {
     setOpen(false);
     await logout().unwrap().catch(() => undefined);
+    signOutOfGoogle();
     toast.success("Logged out");
     router.push("/");
     router.refresh();

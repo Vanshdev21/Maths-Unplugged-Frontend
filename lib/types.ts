@@ -38,10 +38,25 @@ export interface LessonLink {
   url: string;
 }
 
+export interface LessonFile {
+  public_id: string;
+  name: string;
+  bytes: number;
+  format: string;
+  mimeType: string;
+}
+
+export type LessonContentType = "video" | "document";
+
 export interface Lesson {
   _id: string;
   title: string;
   description?: string;
+  /** Missing on older lessons, which are all videos. */
+  contentType?: LessonContentType;
+  file?: LessonFile | null;
+  documentUrl?: string;
+  allowDownload?: boolean;
   videoUrl?: string;
   videoSection: string;
   videoLength: number;

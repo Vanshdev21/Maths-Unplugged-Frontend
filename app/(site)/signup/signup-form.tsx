@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field, Input, PasswordInput } from "@/components/ui/field";
+import { GoogleButton } from "@/components/auth/google-button";
 import { useRegisterMutation } from "@/redux/api/authApi";
 import { signupSchema, type SignupValues } from "@/lib/validation";
 import { getErrorMessage } from "@/lib/utils";
@@ -36,6 +37,7 @@ export function SignupForm() {
 
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-5">
+      <GoogleButton context="signup" />
       <Field label="Full name" error={errors.name?.message}>
         {(id, d) => <Input id={id} autoComplete="name" aria-invalid={!!errors.name} aria-describedby={d} {...register("name")} />}
       </Field>

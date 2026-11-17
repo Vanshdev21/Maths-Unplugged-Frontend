@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal/legal-page";
+import { PAYMENTS_ENABLED } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Terms of use" };
 
@@ -23,6 +24,8 @@ export default function TermsPage() {
             "Lessons, notes and other materials remain the property of Maths Unplugged. Don't download, copy or redistribute them.",
           ],
         },
+        ...(PAYMENTS_ENABLED
+          ? [
         {
           heading: "Payments",
           body: [
@@ -30,6 +33,13 @@ export default function TermsPage() {
             "See the refund policy for when you can ask for your money back.",
           ],
         },
+            ]
+          : [
+              {
+                heading: "Free courses",
+                body: ["Courses are currently free to enrol in. If we introduce paid courses later, we'll show the price clearly before you enrol."],
+              },
+            ]),
         {
           heading: "Community",
           body: [

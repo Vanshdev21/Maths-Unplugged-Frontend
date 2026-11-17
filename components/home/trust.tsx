@@ -1,5 +1,6 @@
 import { InfinityIcon, MessagesSquare, ShieldCheck, Star } from "lucide-react";
 import { Container } from "@/components/ui/misc";
+import { PAYMENTS_ENABLED } from "@/lib/site";
 
 const points = [
   {
@@ -12,11 +13,17 @@ const points = [
     title: "A teacher who replies",
     body: "Each lesson has its own question thread, and you get an email when someone answers.",
   },
-  {
-    icon: ShieldCheck,
-    title: "Safe checkout",
-    body: "Pay with UPI, cards or net banking through Razorpay. We never see your card details.",
-  },
+  PAYMENTS_ENABLED
+    ? {
+        icon: ShieldCheck,
+        title: "Safe checkout",
+        body: "Pay with UPI, cards or net banking through Razorpay. We never see your card details.",
+      }
+    : {
+        icon: ShieldCheck,
+        title: "Free to start",
+        body: "Every course is free to enrol in right now. Create an account and start the first lesson in under a minute.",
+      },
   {
     icon: Star,
     title: "Honest reviews",

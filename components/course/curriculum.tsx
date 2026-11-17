@@ -1,4 +1,4 @@
-import { ChevronDown, Lock, PlayCircle } from "lucide-react";
+import { ChevronDown, FileText, Lock, PlayCircle } from "lucide-react";
 import { formatDuration, groupBySection } from "@/lib/utils";
 import type { Lesson } from "@/lib/types";
 
@@ -23,7 +23,11 @@ export function Curriculum({ lessons }: { lessons: Partial<Lesson>[] }) {
           <ul>
             {section.lessons.map((lesson) => (
               <li key={lesson._id ?? lesson.index} className="flex items-center gap-3 border-t border-border px-5 py-3.5 text-[15px]">
-                <PlayCircle className="h-4 w-4 shrink-0 text-muted" aria-hidden />
+                {lesson.contentType === "document" ? (
+                  <FileText className="h-4 w-4 shrink-0 text-muted" aria-label="Notes" />
+                ) : (
+                  <PlayCircle className="h-4 w-4 shrink-0 text-muted" aria-label="Video" />
+                )}
                 <span className="flex-1">{lesson.title}</span>
                 {!!lesson.videoLength && <span className="text-sm text-muted tabular">{formatDuration(lesson.videoLength)}</span>}
                 <Lock className="h-3.5 w-3.5 text-subtle" aria-label="Unlocks after enrolment" />

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal/legal-page";
+import { PAYMENTS_ENABLED } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Privacy policy" };
 
@@ -13,7 +14,9 @@ export default function PrivacyPage() {
           heading: "What we collect",
           body: [
             "Your name, email address and password (stored only as a secure hash), your profile picture if you add one, the courses you enrol in, and the questions and reviews you post.",
-            "We don't receive or store your card or bank details. Razorpay handles payment information under its own privacy policy.",
+            ...(PAYMENTS_ENABLED
+              ? ["We don't receive or store your card or bank details. Razorpay handles payment information under its own privacy policy."]
+              : []),
           ],
         },
         {

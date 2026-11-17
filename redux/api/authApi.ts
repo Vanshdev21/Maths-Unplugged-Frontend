@@ -68,9 +68,22 @@ export const authApi = baseApi.injectEndpoints({
           const { data } = await queryFulfilled;
           dispatch(setUser(data.user));
           // Fetch the full profile (includes enrolled courses).
-          dispatch(baseApi.util.invalidateTags(["Me", "MyCourses"]));
+          dispatch(baseApi.util.invalidateTags(["Me", "MyCourses", "Progress"]));
         } catch {
           /* handled by the form */
+        }
+      },
+    }),
+
+    googleLogin: build.mutation<ApiMessage & { user: User }, { credential: string }>({
+      query: (body) => ({ url: "/user/google", method: "POST", body }),
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(setUser(data.user));
+          dispatch(baseApi.util.invalidateTags(["Me", "MyCourses", "Progress"]));
+        } catch {
+          /* handled by the button */
         }
       },
     }),
@@ -98,4 +111,5 @@ export const {
   useResetPasswordMutation,
   useLoginMutation,
   useLogoutMutation,
+  useGoogleLoginMutation,
 } = authApi;

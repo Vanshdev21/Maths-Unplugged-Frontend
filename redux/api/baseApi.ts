@@ -56,6 +56,7 @@ export const baseApi = createApi({
     "Course",
     "MyCourses",
     "Content",
+    "Progress",
     "AdminCourses",
     "Users",
     "Orders",

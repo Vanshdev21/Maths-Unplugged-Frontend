@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/ui/misc";
 import { Button } from "@/components/ui/button";
 import { inputClass, Select } from "@/components/ui/field";
 import { cn, splitTags } from "@/lib/utils";
-import { LEVELS } from "@/lib/site";
+import { LEVELS, PAYMENTS_ENABLED } from "@/lib/site";
 import type { Course } from "@/lib/types";
 
 type Sort = "newest" | "popular" | "rating" | "price-asc" | "price-desc";
@@ -100,8 +100,12 @@ export function CourseBrowser({ courses, categories, initial }: Props) {
             <option value="newest">Newest</option>
             <option value="popular">Most enrolled</option>
             <option value="rating">Highest rated</option>
-            <option value="price-asc">Price: low to high</option>
-            <option value="price-desc">Price: high to low</option>
+            {PAYMENTS_ENABLED && (
+              <>
+                <option value="price-asc">Price: low to high</option>
+                <option value="price-desc">Price: high to low</option>
+              </>
+            )}
           </Select>
         </div>
       </div>

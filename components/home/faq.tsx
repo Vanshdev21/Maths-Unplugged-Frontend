@@ -1,16 +1,22 @@
 import { Plus } from "lucide-react";
 import { Container } from "@/components/ui/misc";
 import type { FaqItem } from "@/lib/types";
+import { PAYMENTS_ENABLED } from "@/lib/site";
 
 export const DEFAULT_FAQ: FaqItem[] = [
   {
     question: "How long do I have access to a course?",
     answer: "For as long as the course is available. Watch lessons as many times as you like, on any device.",
   },
-  {
-    question: "How do I pay?",
+  PAYMENTS_ENABLED
+    ? {
+        question: "How do I pay?",
     answer: "Checkout is handled by Razorpay. You can pay with UPI, debit or credit card, or net banking. Access is unlocked as soon as the payment is confirmed.",
-  },
+      }
+    : {
+        question: "Are the courses free?",
+        answer: "Yes. Every course is free to enrol in right now. Create an account, open a course and press Enrol for free.",
+      },
   {
     question: "What if I get stuck on a question?",
     answer: "Post it in the Q&A tab under the lesson. You'll get an email when someone replies.",

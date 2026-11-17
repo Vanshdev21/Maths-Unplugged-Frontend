@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Field, Input, PasswordInput } from "@/components/ui/field";
+import { GoogleButton } from "@/components/auth/google-button";
 import { useLoginMutation } from "@/redux/api/authApi";
 import { loginSchema, type LoginValues } from "@/lib/validation";
 import { getErrorMessage } from "@/lib/utils";
@@ -43,6 +44,7 @@ export function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} noValidate className="space-y-5">
+      <GoogleButton context="signin" />
       <Field label="Email" error={errors.email?.message}>
         {(id, d) => (
           <Input id={id} type="email" autoComplete="email" aria-invalid={!!errors.email} aria-describedby={d} {...register("email")} />

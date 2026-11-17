@@ -10,6 +10,7 @@ import { EmptyState, Skeleton } from "@/components/ui/misc";
 import { Tabs } from "@/components/ui/tabs";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { VideoPlayer } from "@/components/course/video-player";
+import { DocumentViewer } from "@/components/course/document-viewer";
 import { LessonList } from "@/components/player/lesson-list";
 import { QnA } from "@/components/player/qna";
 import { ReviewForm } from "@/components/player/review-form";
@@ -25,7 +26,7 @@ export function Player() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data, isLoading, isError, error, refetch } = useGetCourseContentQuery(id);
-  const { completed, lastLesson, toggle, setLast } = useCourseProgress(id);
+  const { completed, lastLesson, toggle, setLast, ready: progressReady } = useCourseProgress(id);
   const [tab, setTab] = useState<Tab>("overview");
   const [drawer, setDrawer] = useState(false);
 
@@ -38,9 +39,10 @@ export function Player() {
   }, [lessons, requested, lastLesson]);
   const lesson = lessons[currentIndex];
 
+  // Wait for saved progress before recording, so we don't overwrite it.
   useEffect(() => {
-    if (lesson) setLast(lesson._id);
-  }, [lesson, setLast]);
+    if (lesson && progressReady) setLast(lesson._id);
+  }, [lesson, progressReady, setLast]);
 
   const go = useCallback(
     (target?: Lesson) => {
@@ -124,15 +126,19 @@ export function Player() {
     <Shell title={data.course.name} percent={percent} onOpenLessons={() => setDrawer(true)}>
       <div className="mx-auto grid max-w-[1500px] lg:grid-cols-[1fr_380px]">
         <div className="min-w-0 px-4 pt-4 pb-16 sm:px-6 lg:pt-6">
-          <VideoPlayer
-            url={lesson.videoUrl}
-            player={lesson.videoPlayer}
-            title={lesson.title}
-            onEnded={() => {
-              toggle(lesson._id, true);
-              if (next) go(next);
-            }}
-          />
+          {lesson.contentType === "document" ? (
+            <DocumentViewer key={lesson._id} courseId={id} lesson={lesson} />
+          ) : (
+            <VideoPlayer
+              url={lesson.videoUrl}
+              player={lesson.videoPlayer}
+              title={lesson.title}
+              onEnded={() => {
+                toggle(lesson._id, true);
+                if (next) go(next);
+              }}
+            />
+          )}
 
           <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
@@ -141,7 +147,9 @@ export function Player() {
                 <span className="mx-2" aria-hidden>
                   /
                 </span>
-                Lesson {currentIndex + 1} of {lessons.length}, {formatDuration(lesson.videoLength)}
+                Lesson {currentIndex + 1} of {lessons.length}
+                {lesson.videoLength > 0 &&
+                  `, ${formatDuration(lesson.videoLength)}${lesson.contentType === "document" ? " read" : ""}`}
               </p>
               <h1 className="mt-1.5 text-2xl leading-tight font-bold sm:text-3xl">{lesson.title}</h1>
             </div>
@@ -272,7 +280,7 @@ function Shell({
           </Link>
           <span className="hidden h-5 w-px bg-border sm:block" aria-hidden />
           <p className="min-w-0 flex-1 truncate font-medium">{title}</p>
-          <div className="hidden items-center gap-3 md:flex" title="Your progress on this device">
+          <div className="hidden items-center gap-3 md:flex" title="Your progress">
             <div className="h-1.5 w-28 overflow-hidden rounded-full bg-surface-2">
               <div className="h-full rounded-full bg-brand-line" style={{ width: `${percent}%` }} />
             </div>

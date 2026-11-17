@@ -1,6 +1,12 @@
 import { baseApi } from "./baseApi";
 import type { ApiMessage, Course, CourseComment, CourseContent, Review } from "@/lib/types";
 
+export interface CourseProgress {
+  courseId: string;
+  completed: string[];
+  lastLesson: string | null;
+}
+
 export type CoursePayload = Omit<Partial<Course>, "thumbnail" | "_id"> & {
   thumbnail?: string;
 };
@@ -27,6 +33,41 @@ export const courseApi = baseApi.injectEndpoints({
       providesTags: (_r, _e, id) => [{ type: "Content", id }],
     }),
 
+    getProgress: build.query<{ progress: CourseProgress[] }, void>({
+      query: () => "/course/progress",
+      providesTags: ["Progress"],
+    }),
+
+    updateProgress: build.mutation<
+      { progress: CourseProgress | null },
+      { courseId: string; lessonId?: string; done?: boolean; last?: boolean; completed?: string[] }
+    >({
+      query: ({ courseId, ...body }) => ({ url: `/course/${courseId}/progress`, method: "PUT", body }),
+      // Update the screen immediately; undo if the server says no.
+      async onQueryStarted({ courseId, lessonId, done, last, completed }, { dispatch, queryFulfilled }) {
+        const patch = dispatch(
+          courseApi.util.updateQueryData("getProgress", undefined, (draft) => {
+            let entry = draft.progress.find((p) => p.courseId === courseId);
+            if (!entry) {
+              entry = { courseId, completed: [], lastLesson: null };
+              draft.progress.push(entry);
+            }
+            const set = new Set(entry.completed);
+            if (lessonId && done === true) set.add(lessonId);
+            if (lessonId && done === false) set.delete(lessonId);
+            completed?.forEach((id) => set.add(id));
+            entry.completed = [...set];
+            if (lessonId && last) entry.lastLesson = lessonId;
+          }),
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patch.undo();
+        }
+      },
+    }),
+
     addQuestion: build.mutation<ApiMessage & { questions: CourseComment[] }, { question: string; courseId: string; contentId: string }>({
       query: (body) => ({ url: "/course/add-question", method: "POST", body }),
       invalidatesTags: (_r, _e, arg) => [{ type: "Content", id: arg.courseId }],
@@ -48,6 +89,14 @@ export const courseApi = baseApi.injectEndpoints({
     }),
 
     // ---------- Admin ----------
+    getLessonUploadSignature: build.query<
+      { upload: { url: string; apiKey: string; timestamp: number; folder: string; type: string; signature: string } },
+      void
+    >({
+      query: () => "/course/lesson-upload-signature",
+      keepUnusedDataFor: 0,
+    }),
+
     getAdminCourses: build.query<{ courses: Course[] }, void>({
       query: () => "/course/get-all-courses",
       providesTags: ["AdminCourses"],
@@ -86,10 +135,13 @@ export const {
   useGetCourseQuery,
   useGetMyCoursesQuery,
   useGetCourseContentQuery,
+  useGetProgressQuery,
+  useUpdateProgressMutation,
   useAddQuestionMutation,
   useAddReplyMutation,
   useAddReviewMutation,
   useAddReviewReplyMutation,
+  useLazyGetLessonUploadSignatureQuery,
   useGetAdminCoursesQuery,
   useGetAdminCourseQuery,
   useCreateCourseMutation,
