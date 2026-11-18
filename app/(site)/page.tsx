@@ -6,12 +6,19 @@ import { Faq } from "@/components/home/faq";
 import { Cta } from "@/components/home/cta";
 import { CourseCard } from "@/components/course/course-card";
 import { Container, EmptyState } from "@/components/ui/misc";
-import { fetchCourses, fetchLayout } from "@/lib/server-api";
+import { fetchCourses, fetchHomeContent, fetchLayout } from "@/lib/server-api";
+import { defaultHomeContent } from "@/lib/page-defaults";
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [courses, banner, faq] = await Promise.all([fetchCourses(), fetchLayout("Banner"), fetchLayout("FAQ")]);
+  const [courses, banner, faq, homeText] = await Promise.all([
+    fetchCourses(),
+    fetchLayout("Banner"),
+    fetchLayout("FAQ"),
+    fetchHomeContent(),
+  ]);
+  const home = homeText ?? defaultHomeContent();
 
   const list = courses ?? [];
   const rated = list.filter((c) => (c.ratings ?? 0) > 0);
@@ -58,8 +65,8 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      <HowItWorks />
-      <Trust />
+      <HowItWorks content={home.howItWorks} />
+      <Trust content={home.trust} />
       <Faq items={faq?.faq} />
       <Cta />
     </>

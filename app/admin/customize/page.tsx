@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { ImagePlus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/admin/admin-shell";
+import { HomeSectionEditor } from "@/components/admin/home-sections-editor";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/misc";
@@ -214,22 +215,26 @@ function CategoriesForm({ layout }: { layout: Layout | null }) {
 }
 
 export default function CustomizePage() {
-  const [tab, setTab] = useState<"banner" | "faq" | "categories">("banner");
+  const [tab, setTab] = useState<"banner" | "steps" | "trust" | "faq" | "categories">("banner");
   return (
     <>
-      <PageHeader title="Homepage" description="Edit the hero, FAQ and course categories." />
+      <PageHeader title="Homepage" description="Edit the hero, the homepage sections, FAQ and course categories." />
       <Tabs
         label="Homepage sections"
         value={tab}
         onChange={setTab}
         items={[
           { value: "banner", label: "Hero" },
+          { value: "steps", label: "How it works" },
+          { value: "trust", label: "What you can count on" },
           { value: "faq", label: "FAQ" },
           { value: "categories", label: "Categories" },
         ]}
       />
       <div className="pt-8">
         {tab === "banner" && <BannerEditor />}
+        {tab === "steps" && <HomeSectionEditor key="steps" part="howItWorks" />}
+        {tab === "trust" && <HomeSectionEditor key="trust" part="trust" />}
         {tab === "faq" && <FaqEditor />}
         {tab === "categories" && <CategoriesEditor />}
       </div>

@@ -1,5 +1,5 @@
 import { baseApi } from "./baseApi";
-import type { ApiMessage, AppNotification, Layout, MonthCount, PageImage, PageSlug, SitePage } from "@/lib/types";
+import type { ApiMessage, AppNotification, HomeContent, Layout, MonthCount, PageImage, PageSlug, SitePage } from "@/lib/types";
 
 type LayoutType = Layout["type"];
 
@@ -46,6 +46,16 @@ export const adminApi = baseApi.injectEndpoints({
     savePage: build.mutation<ApiMessage & { page: SitePage }, { slug: PageSlug; page: PagePayload }>({
       query: ({ slug, page }) => ({ url: `/page/${slug}`, method: "PUT", body: page }),
       invalidatesTags: (_r, _e, arg) => [{ type: "Page", id: arg.slug }],
+    }),
+
+    getHomeContent: build.query<{ content: HomeContent | null }, void>({
+      query: () => "/page/home",
+      providesTags: [{ type: "Page", id: "home" }],
+    }),
+
+    saveHomeContent: build.mutation<ApiMessage & { content: HomeContent }, Omit<HomeContent, "updatedAt">>({
+      query: (body) => ({ url: "/page/home", method: "PUT", body }),
+      invalidatesTags: [{ type: "Page", id: "home" }],
     }),
 
     // ---------- Analytics ----------
@@ -96,6 +106,8 @@ export const {
   useSaveLayoutMutation,
   useGetPageQuery,
   useSavePageMutation,
+  useGetHomeContentQuery,
+  useSaveHomeContentMutation,
   useGetUsersAnalyticsQuery,
   useGetOrdersAnalyticsQuery,
   useGetCoursesAnalyticsQuery,

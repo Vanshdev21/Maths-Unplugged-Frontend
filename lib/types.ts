@@ -189,3 +189,15 @@ export interface SitePage {
   showContact: boolean;
   updatedAt?: string;
 }
+
+/* ---------- Editable homepage text ---------- */
+
+export type HomeIcon =
+  | "infinity" | "messages" | "shield" | "star" | "book" | "clock" | "award" | "users"
+  | "heart" | "zap" | "target" | "phone" | "lock" | "check" | "sparkles" | "graduation";
+
+export interface HomeContent {
+  howItWorks: { heading: string; subtitle: string; steps: { title: string; text: string }[] };
+  trust: { heading: string; subtitle: string; items: { icon: HomeIcon; title: string; text: string }[] };
+  updatedAt?: string;
+}

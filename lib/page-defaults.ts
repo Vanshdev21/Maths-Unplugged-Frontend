@@ -1,5 +1,5 @@
 import { PAYMENTS_ENABLED } from "./site";
-import type { PageSlug, SitePage } from "./types";
+import type { HomeContent, PageSlug, SitePage } from "./types";
 
 /**
  * What each page shows until an admin saves their own version
@@ -129,3 +129,31 @@ export const PAGE_LABELS: Record<PageSlug, string> = {
   privacy: "Privacy policy",
   "refund-policy": "Refund policy",
 };
+
+/* ---------- Homepage text defaults (Admin → Homepage) ---------- */
+
+export function defaultHomeContent(): HomeContent {
+  return {
+    howItWorks: {
+      heading: "How every lesson works",
+      subtitle: "The same three steps, in every topic. Repeat them and the hard chapters stop being hard.",
+      steps: [
+        { title: "Learn", text: "Watch a short lesson that explains one idea at a time, with a worked example on screen." },
+        { title: "Attempt", text: "Try the questions yourself before looking at the solution. Mistakes here are the point." },
+        { title: "Improve", text: "Ask about anything that didn't click. Replies appear under the lesson and in your inbox." },
+      ],
+    },
+    trust: {
+      heading: "What you can count on",
+      subtitle: "",
+      items: [
+        { icon: "infinity", title: "Yours to keep", text: "Keep access to every lesson in the course. Rewatch before every exam." },
+        { icon: "messages", title: "A teacher who replies", text: "Each lesson has its own question thread, and you get an email when someone answers." },
+        PAYMENTS_ENABLED
+          ? { icon: "shield", title: "Safe checkout", text: "Pay with UPI, cards or net banking through Razorpay. We never see your card details." }
+          : { icon: "shield", title: "Free to start", text: "Every course is free to enrol in right now. Create an account and start the first lesson in under a minute." },
+        { icon: "star", title: "Honest reviews", text: "Only enrolled students can rate a course, so every review comes from someone who took it." },
+      ],
+    },
+  };
+}

@@ -1,6 +1,6 @@
 import "server-only";
 import { SERVER_API_URL } from "./site";
-import type { Course, Layout, PageSlug, SitePage } from "./types";
+import type { Course, HomeContent, Layout, PageSlug, SitePage } from "./types";
 
 /**
  * Public data for server components (SEO + fast first paint).
@@ -39,4 +39,10 @@ export async function fetchLayout(type: Layout["type"]) {
 export async function fetchPage(slug: PageSlug) {
   const data = await getJSON<{ page: SitePage | null }>(`/page/${slug}`, 60);
   return data?.page ?? null;
+}
+
+/** Homepage section text, or null if the admin hasn't saved any yet. */
+export async function fetchHomeContent() {
+  const data = await getJSON<{ content: HomeContent | null }>("/page/home", 60);
+  return data?.content ?? null;
 }
