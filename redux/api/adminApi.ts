@@ -4,7 +4,7 @@ import type { ApiMessage, AppNotification, HomeContent, Layout, MonthCount, Page
 type LayoutType = Layout["type"];
 
 export type LayoutPayload =
-  | { type: "Banner"; image?: string; title: string; subTitle: string }
+  | { type: "Banner"; image?: string; removeImage?: boolean; title: string; subTitle: string }
   | { type: "FAQ"; faq: { question: string; answer: string }[] }
   | { type: "Categories"; categories: { title: string }[] };
 

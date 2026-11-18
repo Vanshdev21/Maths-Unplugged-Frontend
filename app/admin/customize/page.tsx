@@ -26,10 +26,11 @@ function BannerForm({ layout }: { layout: Layout | null }) {
   const [title, setTitle] = useState(banner?.title ?? "");
   const [subTitle, setSubTitle] = useState(banner?.subTitle ?? "");
   const [image, setImage] = useState<string | null>(null);
+  const [removeImage, setRemoveImage] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const exists = !!layout;
-  const preview = image ?? banner?.image?.url;
+  const preview = image ?? (removeImage ? undefined : banner?.image?.url);
 
   return (
     <form
@@ -37,23 +38,24 @@ function BannerForm({ layout }: { layout: Layout | null }) {
       onSubmit={async (e) => {
         e.preventDefault();
         if (!title.trim() || !subTitle.trim()) return toast.error("Add a headline and a subheading");
-        if (!exists && !image) return toast.error("Upload an image for the hero");
         try {
-          await save({ type: "Banner", exists, title, subTitle, ...(image ? { image } : {}) }).unwrap();
+          await save({ type: "Banner", exists, title, subTitle, ...(image ? { image } : removeImage ? { removeImage: true } : {}) }).unwrap();
           setImage(null);
-          toast.success("Homepage hero saved. It can take up to 5 minutes to appear.");
+          setRemoveImage(false);
+          await fetch("/api/revalidate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: "/" }) }).catch(() => null);
+          toast.success("Homepage hero saved and published.");
         } catch (err) {
           toast.error(getErrorMessage(err));
         }
       }}
     >
       <p className="text-sm text-muted">
-        Until you save a hero, the homepage shows the default headline with the learning-curve illustration.
+        Until you save a hero, the homepage shows the default headline. Without an image, it shows the learning-curve illustration.
       </p>
       <Field label="Headline">{(id) => <Input id={id} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Maths that finally makes sense." />}</Field>
       <Field label="Subheading">{(id) => <Textarea id={id} rows={3} value={subTitle} onChange={(e) => setSubTitle(e.target.value)} />}</Field>
       <div>
-        <p className="mb-1.5 text-sm font-medium">Image</p>
+        <p className="mb-1.5 text-sm font-medium">Image (optional)</p>
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
@@ -62,11 +64,26 @@ function BannerForm({ layout }: { layout: Layout | null }) {
           {preview ? (
             <Image src={preview} alt="Hero image" fill sizes="384px" className="object-cover" unoptimized={!!image} />
           ) : (
-            <span className="flex flex-col items-center gap-2">
+            <span className="flex flex-col items-center gap-2 px-6 text-center">
               <ImagePlus className="h-6 w-6" aria-hidden /> Upload image
+              <span className="text-xs text-subtle">No image: the homepage shows the learning-curve illustration</span>
             </span>
           )}
         </button>
+        {preview && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="mt-2"
+            onClick={() => {
+              setImage(null);
+              setRemoveImage(true);
+            }}
+          >
+            <Trash2 className="h-4 w-4" aria-hidden /> Remove image (use the learning-curve illustration)
+          </Button>
+        )}
         <input
           ref={fileRef}
           type="file"
@@ -77,6 +94,7 @@ function BannerForm({ layout }: { layout: Layout | null }) {
             if (!file) return;
             try {
               setImage(await compressImage(file, 1600));
+              setRemoveImage(false);
             } catch (err) {
               toast.error(getErrorMessage(err));
             }
