@@ -1,5 +1,5 @@
 import { baseApi } from "./baseApi";
-import type { ApiMessage, AppNotification, Layout, MonthCount } from "@/lib/types";
+import type { ApiMessage, AppNotification, Layout, MonthCount, PageImage, PageSlug, SitePage } from "@/lib/types";
 
 type LayoutType = Layout["type"];
 
@@ -7,6 +7,19 @@ export type LayoutPayload =
   | { type: "Banner"; image?: string; title: string; subTitle: string }
   | { type: "FAQ"; faq: { question: string; answer: string }[] }
   | { type: "Categories"; categories: { title: string }[] };
+
+/** An image is kept as stored ({ public_id, url }), replaced (data URL) or removed (null). */
+export type PageImageInput = PageImage | string | null;
+
+export interface PagePayload {
+  title: string;
+  subtitle: string;
+  heroImage: PageImageInput;
+  highlights: { value: string; label: string }[];
+  sections: { heading: string; body: string; image: PageImageInput }[];
+  cta: { text: string; href: string };
+  showContact: boolean;
+}
 
 export const adminApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -22,6 +35,17 @@ export const adminApi = baseApi.injectEndpoints({
           ? { url: `/edit-layout/${body.type}`, method: "PUT", body }
           : { url: "/create-layout", method: "POST", body },
       invalidatesTags: (_r, _e, arg) => [{ type: "Layout", id: arg.type }],
+    }),
+
+    // ---------- Content pages (About, Terms, Privacy, Refund) ----------
+    getPage: build.query<{ page: SitePage | null }, PageSlug>({
+      query: (slug) => `/page/${slug}`,
+      providesTags: (_r, _e, slug) => [{ type: "Page", id: slug }],
+    }),
+
+    savePage: build.mutation<ApiMessage & { page: SitePage }, { slug: PageSlug; page: PagePayload }>({
+      query: ({ slug, page }) => ({ url: `/page/${slug}`, method: "PUT", body: page }),
+      invalidatesTags: (_r, _e, arg) => [{ type: "Page", id: arg.slug }],
     }),
 
     // ---------- Analytics ----------
@@ -70,6 +94,8 @@ export const adminApi = baseApi.injectEndpoints({
 export const {
   useGetLayoutQuery,
   useSaveLayoutMutation,
+  useGetPageQuery,
+  useSavePageMutation,
   useGetUsersAnalyticsQuery,
   useGetOrdersAnalyticsQuery,
   useGetCoursesAnalyticsQuery,

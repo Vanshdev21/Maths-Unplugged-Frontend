@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { Bell, BookOpen, LayoutDashboard, Menu, Paintbrush, ReceiptIndianRupee, Users, X } from "lucide-react";
+import { Bell, BookOpen, LayoutDashboard, Menu, Paintbrush, ReceiptIndianRupee, Users, X, FileText } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { UserMenu } from "@/components/layout/user-menu";
@@ -17,6 +17,7 @@ const nav = [
   { href: "/admin/orders", label: "Orders", icon: ReceiptIndianRupee },
   { href: "/admin/notifications", label: "Notifications", icon: Bell },
   { href: "/admin/customize", label: "Homepage", icon: Paintbrush },
+  { href: "/admin/pages", label: "Pages", icon: FileText },
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {

@@ -62,6 +62,7 @@ export const baseApi = createApi({
     "Orders",
     "Notifications",
     "Layout",
+    "Page",
     "Analytics",
   ],
   refetchOnReconnect: true,

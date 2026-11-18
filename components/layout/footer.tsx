@@ -23,6 +23,7 @@ const groups = [
   {
     title: "Policies",
     links: [
+      { href: "/about", label: "About us" },
       { href: "/terms", label: "Terms of use" },
       { href: "/privacy", label: "Privacy policy" },
       ...(PAYMENTS_ENABLED ? [{ href: "/refund-policy", label: "Refund policy" }] : []),

@@ -1,6 +1,6 @@
 import "server-only";
 import { SERVER_API_URL } from "./site";
-import type { Course, Layout } from "./types";
+import type { Course, Layout, PageSlug, SitePage } from "./types";
 
 /**
  * Public data for server components (SEO + fast first paint).
@@ -33,4 +33,10 @@ export async function fetchCourse(id: string) {
 export async function fetchLayout(type: Layout["type"]) {
   const data = await getJSON<{ layout: Layout | null }>(`/get-layout/${type}`, 300);
   return data?.layout ?? null;
+}
+
+/** An editable content page, or null if the admin hasn't saved one yet. */
+export async function fetchPage(slug: PageSlug) {
+  const data = await getJSON<{ page: SitePage | null }>(`/page/${slug}`, 60);
+  return data?.page ?? null;
 }

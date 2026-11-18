@@ -160,3 +160,32 @@ export interface ApiMessage {
   success: boolean;
   message?: string;
 }
+
+/* ---------- Editable content pages (About, Terms, Privacy, Refund) ---------- */
+
+export type PageSlug = "about" | "terms" | "privacy" | "refund-policy";
+
+export interface PageImage {
+  public_id: string;
+  url: string;
+}
+
+export interface PageSection {
+  _id?: string;
+  heading: string;
+  /** Plain text. Blank line = new paragraph, "- " = bullet, **bold**, [text](link). */
+  body: string;
+  image?: PageImage;
+}
+
+export interface SitePage {
+  slug: PageSlug;
+  title: string;
+  subtitle?: string;
+  heroImage?: PageImage;
+  highlights: { value: string; label: string }[];
+  sections: PageSection[];
+  cta?: { text: string; href: string };
+  showContact: boolean;
+  updatedAt?: string;
+}
